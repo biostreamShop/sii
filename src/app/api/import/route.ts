@@ -39,11 +39,13 @@ async function processCSV(
 
   const startTime = Date.now();
 
-  // Parse CSV
+  // Parse CSV with automatic delimiter detection
   const parsed = Papa.parse<Record<string, string>>(fileContent, {
     header: true,
     skipEmptyLines: true,
     transformHeader: (header) => header.trim(),
+    delimiter: "", // Auto-detect delimiter (handles ; and ,)
+    quoteChar: '"',
   });
 
   if (parsed.errors.length > 0) {
