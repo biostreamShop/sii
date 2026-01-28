@@ -26,40 +26,42 @@ export interface ImportResult {
   errors: string[];
 }
 
-// Default column mappings - can be configured
+// Default column mappings for SII CSV files
 export const defaultColumnMappings = {
   ventas: {
-    tipoDocumento: ["Tipo Doc", "Tipo Documento", "Tipo", "TipoDoc"],
+    tipoDocumento: ["Tipo Doc", "Tipo Documento", "Tipo", "TipoDoc", "Tipo Docto"],
     folio: ["Folio", "N° Documento", "Numero", "Nro"],
-    fechaEmision: ["Fecha", "Fecha Emision", "FechaEmision", "Fecha Emisión"],
-    rut: ["RUT", "Rut Cliente", "RUT Cliente", "Rut"],
+    fechaEmision: ["Fecha Docto", "Fecha", "Fecha Emision", "FechaEmision", "Fecha Emisión", "Fecha Documento"],
+    rut: ["Rut cliente", "RUT", "Rut Cliente", "RUT Cliente", "Rut"],
     razonSocial: ["Razon Social", "Razón Social", "Cliente", "Nombre"],
-    montoExento: ["Exento", "Monto Exento", "Exento Neto"],
-    montoNeto: ["Neto", "Monto Neto", "Neto $", "Monto Neto $"],
-    montoIva: ["IVA", "Monto IVA", "IVA $"],
-    montoTotal: ["Total", "Monto Total", "Total $"],
+    montoExento: ["Monto Exento", "Exento", "Exento Neto"],
+    montoNeto: ["Monto Neto", "Neto", "Neto $", "Monto Neto $"],
+    montoIva: ["Monto IVA", "IVA", "IVA $"],
+    montoTotal: ["Monto total", "Total", "Monto Total", "Total $"],
   },
   compras: {
-    tipoDocumento: ["Tipo Doc", "Tipo Documento", "Tipo", "TipoDoc"],
+    tipoDocumento: ["Tipo Doc", "Tipo Documento", "Tipo", "TipoDoc", "Tipo Docto"],
     folio: ["Folio", "N° Documento", "Numero", "Nro"],
-    fechaEmision: ["Fecha", "Fecha Emision", "FechaEmision", "Fecha Emisión", "Fecha Recepción"],
-    rut: ["RUT", "Rut Proveedor", "RUT Proveedor", "Rut"],
+    fechaEmision: ["Fecha Docto", "Fecha", "Fecha Emision", "FechaEmision", "Fecha Emisión", "Fecha Recepcion", "Fecha Recepción", "Fecha Documento"],
+    rut: ["Rut Proveedor", "RUT Proveedor", "RUT", "Rut", "Rut cliente"],
     razonSocial: ["Razon Social", "Razón Social", "Proveedor", "Nombre"],
-    montoExento: ["Exento", "Monto Exento", "Exento Neto"],
-    montoNeto: ["Neto", "Monto Neto", "Neto $", "Monto Neto $"],
-    montoIva: ["IVA", "Monto IVA", "IVA $", "IVA Recuperable"],
-    montoTotal: ["Total", "Monto Total", "Total $"],
+    montoExento: ["Monto Exento", "Exento", "Exento Neto"],
+    montoNeto: ["Monto Neto", "Neto", "Neto $", "Monto Neto $"],
+    montoIva: ["Monto IVA", "IVA", "IVA $", "IVA Recuperable"],
+    montoTotal: ["Monto total", "Total", "Monto Total", "Total $"],
   },
 };
 
 // Liquidation document types that should be reclassified from purchases to sales
+// Type 43 = Liquidación Factura Electrónica
 export const liquidationDocTypes = [
+  "43",
   "Liquidación",
   "Liquidacion",
   "Liquidación Factura",
   "Liquidacion Factura",
-  "43", // SII code for liquidación factura
   "Liquidación-Factura Electrónica",
+  "Liquidación-Factura",
 ];
 
 // Generate unique hash for deduplication
@@ -85,9 +87,12 @@ export function generateTransactionHash(transaction: {
   return CryptoJS.SHA256(normalized).toString();
 }
 
-// Parse Chilean date formats
+// Parse Chilean date formats (including with time)
 export function parseChileanDate(dateStr: string): Date | null {
   if (!dateStr) return null;
+
+  // Remove time portion if present (e.g., "05/01/2026 20:20:45" -> "05/01/2026")
+  const dateOnly = dateStr.split(" ")[0].trim();
 
   // Try different formats
   const formats = [
@@ -102,7 +107,7 @@ export function parseChileanDate(dateStr: string): Date | null {
   ];
 
   for (const format of formats) {
-    const match = dateStr.match(format);
+    const match = dateOnly.match(format);
     if (match) {
       if (match[1].length === 4) {
         // YYYY-MM-DD format
@@ -123,10 +128,10 @@ export function parseChileanDate(dateStr: string): Date | null {
   return null;
 }
 
-// Parse Chilean number format (1.234,56 or 1234.56)
+// Parse Chilean number format (1.234,56 or 1234.56 or just 1234)
 export function parseChileanNumber(numStr: string | number): number {
   if (typeof numStr === "number") return numStr;
-  if (!numStr || numStr === "") return 0;
+  if (!numStr || numStr === "" || numStr === "-") return 0;
 
   // Remove currency symbols and spaces
   let cleaned = numStr.toString().replace(/[$\s]/g, "").trim();
@@ -170,11 +175,13 @@ export function findColumnValue(
   return undefined;
 }
 
-// Check if a document type is a liquidation
+// Check if a document type is a liquidation (Type 43)
 export function isLiquidation(tipoDocumento: string): boolean {
-  const normalized = tipoDocumento.trim().toLowerCase();
+  const normalized = tipoDocumento.trim();
+  // Check if it's exactly "43" or contains liquidación
+  if (normalized === "43") return true;
   return liquidationDocTypes.some(
-    (type) => normalized.includes(type.toLowerCase())
+    (type) => normalized.toLowerCase().includes(type.toLowerCase())
   );
 }
 

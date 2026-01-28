@@ -39,12 +39,21 @@ async function processCSV(
 
   const startTime = Date.now();
 
-  // Parse CSV with automatic delimiter detection
+  // Detect delimiter: check if file uses tabs, semicolons, or commas
+  const firstLine = fileContent.split("\n")[0];
+  let delimiter = ",";
+  if (firstLine.includes("\t")) {
+    delimiter = "\t";
+  } else if (firstLine.split(";").length > firstLine.split(",").length) {
+    delimiter = ";";
+  }
+
+  // Parse CSV with detected delimiter
   const parsed = Papa.parse<Record<string, string>>(fileContent, {
     header: true,
     skipEmptyLines: true,
     transformHeader: (header) => header.trim(),
-    delimiter: "", // Auto-detect delimiter (handles ; and ,)
+    delimiter: delimiter,
     quoteChar: '"',
   });
 
