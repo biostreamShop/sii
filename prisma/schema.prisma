@@ -1,0 +1,97 @@
+// Schema for Sales and Purchases Management System
+// Using SQLite for local persistence
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Main transaction table - stores both sales and purchases
+model Transaction {
+  id              Int      @id @default(autoincrement())
+
+  // Document identification
+  tipoDocumento   String   // Tipo de documento (Factura, Boleta, Nota de Crédito, etc.)
+  folio           String   // Número de folio del documento
+  fechaEmision    DateTime // Fecha de emisión
+
+  // Entity information
+  rut             String   // RUT del cliente/proveedor
+  razonSocial     String   // Nombre o razón social
+
+  // Amounts
+  montoExento     Float    @default(0) // Monto exento de IVA
+  montoNeto       Float    @default(0) // Monto neto
+  montoIva        Float    @default(0) // IVA
+  montoTotal      Float    @default(0) // Total
+
+  // Classification
+  categoria       String   // "venta" or "compra"
+  reclassified    Boolean  @default(false) // True if originally was purchase but is liquidation
+  originalSource  String?  // If reclassified, stores original source ("compras")
+
+  // Deduplication
+  uniqueHash      String   @unique // Hash for deduplication
+
+  // Audit fields
+  sourceFile      String   // Original CSV filename
+  importedAt      DateTime @default(now())
+
+  // Additional data (JSON string for extra columns)
+  extraData       String?  // Store any additional columns as JSON
+
+  // Indexes for common queries
+  @@index([categoria])
+  @@index([fechaEmision])
+  @@index([tipoDocumento])
+  @@index([rut])
+}
+
+// IVA monthly adjustments - for manual corrections
+model IvaAdjustment {
+  id            Int      @id @default(autoincrement())
+  year          Int      // Year
+  month         Int      // Month (1-12)
+  adjustedValue Float    // Manually adjusted IVA value
+  notes         String?  // Notes explaining the adjustment
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([year, month])
+}
+
+// Import log - audit trail for imports
+model ImportLog {
+  id                  Int      @id @default(autoincrement())
+  fileName            String   // Original filename
+  fileType            String   // "ventas" or "compras"
+  totalRows           Int      // Total rows in file
+  insertedRows        Int      // New rows inserted
+  duplicateRows       Int      // Rows skipped (duplicates)
+  reclassifiedRows    Int      // Rows reclassified (liquidations)
+  errorRows           Int      @default(0) // Rows with errors
+  importedAt          DateTime @default(now())
+  processingTimeMs    Int?     // Processing time in milliseconds
+}
+
+// Column mapping configuration - for flexible CSV parsing
+model ColumnMapping {
+  id          Int     @id @default(autoincrement())
+  fileType    String  // "ventas" or "compras"
+  fieldName   String  // Internal field name
+  columnName  String  // CSV column name
+  isRequired  Boolean @default(false)
+
+  @@unique([fileType, fieldName])
+}
+
+// Settings for the application
+model Setting {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+}
