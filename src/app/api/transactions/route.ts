@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { SII_DOCUMENT_TYPES } from "@/lib/csv-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -79,7 +80,8 @@ export async function GET(request: NextRequest) {
       filters: {
         availableYears,
         documentTypes: docTypes.map((d) => ({
-          name: d.tipoDocumento,
+          code: d.tipoDocumento,
+          name: SII_DOCUMENT_TYPES[d.tipoDocumento] || `Tipo ${d.tipoDocumento}`,
           count: d._count,
         })),
       },

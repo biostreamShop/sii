@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { SII_DOCUMENT_TYPES } from "@/lib/csv-utils";
 
 const monthNames = [
   "Ene",
@@ -193,11 +194,13 @@ export async function GET(request: NextRequest) {
       monthlyData,
       documentTypes: {
         ventas: ventasDocTypes.map((d) => ({
-          name: d.tipoDocumento,
+          code: d.tipoDocumento,
+          name: SII_DOCUMENT_TYPES[d.tipoDocumento] || `Tipo ${d.tipoDocumento}`,
           value: d._count,
         })),
         compras: comprasDocTypes.map((d) => ({
-          name: d.tipoDocumento,
+          code: d.tipoDocumento,
+          name: SII_DOCUMENT_TYPES[d.tipoDocumento] || `Tipo ${d.tipoDocumento}`,
           value: d._count,
         })),
       },

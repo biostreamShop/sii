@@ -52,6 +52,26 @@ export const defaultColumnMappings = {
   },
 };
 
+// SII Document Types - Official codes
+export const SII_DOCUMENT_TYPES: Record<string, string> = {
+  "33": "Factura Electrónica",
+  "34": "Factura No Afecta o Exenta Electrónica",
+  "39": "Boleta Electrónica",
+  "41": "Boleta Exenta Electrónica",
+  "43": "Liquidación-Factura Electrónica",
+  "46": "Factura de Compra Electrónica",
+  "52": "Guía de Despacho Electrónica",
+  "56": "Nota de Débito Electrónica",
+  "61": "Nota de Crédito Electrónica",
+  "110": "Factura de Exportación Electrónica",
+  "111": "Nota de Débito de Exportación Electrónica",
+  "112": "Nota de Crédito de Exportación Electrónica",
+};
+
+// Document type 43 (Liquidación-Factura) must be reclassified from purchases to sales
+// This is a purchase document but the amounts count as sales
+export const RECLASSIFY_TO_SALES = ["43"];
+
 // Liquidation document types that should be reclassified from purchases to sales
 // Type 43 = Liquidación Factura Electrónica
 export const liquidationDocTypes = [
@@ -175,6 +195,12 @@ export function findColumnValue(
   return undefined;
 }
 
+// Check if a document type should be reclassified to sales (Type 43)
+export function shouldReclassifyToSales(tipoDocumento: string): boolean {
+  const normalized = tipoDocumento.trim();
+  return RECLASSIFY_TO_SALES.includes(normalized);
+}
+
 // Check if a document type is a liquidation (Type 43)
 export function isLiquidation(tipoDocumento: string): boolean {
   const normalized = tipoDocumento.trim();
@@ -183,6 +209,11 @@ export function isLiquidation(tipoDocumento: string): boolean {
   return liquidationDocTypes.some(
     (type) => normalized.toLowerCase().includes(type.toLowerCase())
   );
+}
+
+// Get document type name from code
+export function getDocumentTypeName(code: string): string {
+  return SII_DOCUMENT_TYPES[code] || `Tipo ${code}`;
 }
 
 // Format number as Chilean currency
