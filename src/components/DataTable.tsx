@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Search, Download } from "lucide-react";
-import { formatCLP, formatDateCL } from "@/lib/csv-utils";
+import { formatCLP, formatDateCL, SII_DOCUMENT_TYPES } from "@/lib/csv-utils";
 
 interface Column {
   key: string;
   label: string;
-  type?: "text" | "currency" | "date" | "number";
+  type?: "text" | "currency" | "date" | "number" | "documentType";
 }
 
 interface DataTableProps {
@@ -49,9 +49,27 @@ export default function DataTable({
         return formatDateCL(new Date(String(value)));
       case "number":
         return new Intl.NumberFormat("es-CL").format(Number(value));
+      case "documentType":
+        return String(value); // Handled separately with tooltip
       default:
         return String(value);
     }
+  };
+
+  const renderCell = (value: unknown, type?: string) => {
+    if (type === "documentType") {
+      const code = String(value);
+      const name = SII_DOCUMENT_TYPES[code] || `Tipo ${code}`;
+      return (
+        <span className="relative group cursor-help">
+          <span className="font-medium">{code}</span>
+          <span className="absolute left-0 bottom-full mb-1 hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 shadow-lg">
+            {name}
+          </span>
+        </span>
+      );
+    }
+    return formatValue(value, type);
   };
 
   return (
@@ -117,7 +135,7 @@ export default function DataTable({
                 <tr key={index} className="hover:bg-gray-50">
                   {columns.map((column) => (
                     <td key={column.key} className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
-                      {formatValue(row[column.key], column.type)}
+                      {renderCell(row[column.key], column.type)}
                     </td>
                   ))}
                 </tr>

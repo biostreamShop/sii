@@ -196,16 +196,19 @@ export function findColumnValue(
 }
 
 // Check if a document type should be reclassified to sales (Type 43)
-export function shouldReclassifyToSales(tipoDocumento: string): boolean {
-  const normalized = tipoDocumento.trim();
-  return RECLASSIFY_TO_SALES.includes(normalized);
+export function shouldReclassifyToSales(tipoDocumento: string | number): boolean {
+  const normalized = String(tipoDocumento).trim();
+  return normalized === "43";
 }
 
 // Check if a document type is a liquidation (Type 43)
-export function isLiquidation(tipoDocumento: string): boolean {
-  const normalized = tipoDocumento.trim();
-  // Check if it's exactly "43" or contains liquidación
+export function isLiquidation(tipoDocumento: string | number): boolean {
+  const normalized = String(tipoDocumento).trim();
+  // Check if it's exactly "43"
   if (normalized === "43") return true;
+  // Check if it starts with "43 " (code with description)
+  if (normalized.startsWith("43 ") || normalized.startsWith("43-")) return true;
+  // Check for liquidación keyword
   return liquidationDocTypes.some(
     (type) => normalized.toLowerCase().includes(type.toLowerCase())
   );

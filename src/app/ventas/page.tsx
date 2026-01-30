@@ -6,7 +6,7 @@ import { TrendingUp, Download, FileText } from "lucide-react";
 import DataTable from "@/components/DataTable";
 import YearMonthFilter from "@/components/YearMonthFilter";
 import KPICard from "@/components/KPICard";
-import { formatCLP } from "@/lib/csv-utils";
+import { formatCLP, SII_DOCUMENT_TYPES } from "@/lib/csv-utils";
 import Link from "next/link";
 
 interface Transaction {
@@ -33,7 +33,7 @@ interface TransactionResponse {
   };
   filters: {
     availableYears: number[];
-    documentTypes: { name: string; count: number }[];
+    documentTypes: { code: string; name: string; count: number }[];
   };
 }
 
@@ -111,7 +111,7 @@ function VentasContent() {
 
   const columns = [
     { key: "fechaEmision", label: "Fecha", type: "date" as const },
-    { key: "tipoDocumento", label: "Tipo Doc" },
+    { key: "tipoDocumento", label: "Tipo Doc", type: "documentType" as const },
     { key: "folio", label: "Folio" },
     { key: "rut", label: "RUT" },
     { key: "razonSocial", label: "Razón Social" },
@@ -212,8 +212,8 @@ function VentasContent() {
             >
               <option value="">Todos</option>
               {data?.filters.documentTypes.map((dt) => (
-                <option key={dt.name} value={dt.name}>
-                  {dt.name} ({dt.count})
+                <option key={dt.code} value={dt.code}>
+                  {dt.code} - {dt.name} ({dt.count})
                 </option>
               ))}
             </select>
